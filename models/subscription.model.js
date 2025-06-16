@@ -16,7 +16,7 @@ const subscriptionSchema = mongoose.Schema(
     },
     currency: {
       type: String,
-      enum: ["USD", "EUR", "GBP "],
+      enum: ["USD", "EUR", "GBP"],
       default: "USD",
     },
     frequency: {
@@ -51,13 +51,13 @@ const subscriptionSchema = mongoose.Schema(
       type: Date,
       required: true,
       validate: {
-        validator: (value) => value <= new Date(),
+        validator: (value) => value <= Date.now(),
         message: "Start date must be in the past",
       },
     },
     renewalDate: {
       type: Date,
-      required: true,
+      // required: true,
       validate: {
         validator: function (value) {
           return value > this.startDate;
@@ -72,7 +72,7 @@ const subscriptionSchema = mongoose.Schema(
       index: true,
     },
   },
-  { Timestamp: true }
+  { timestamps: true }
 );
 
 // Auto-calculate renewal date if missing
@@ -85,9 +85,12 @@ subscriptionSchema.pre("save", function (next) {
       yearly: 365,
     };
     this.renewalDate = new Date(this.startDate);
-    this.renewalDate.setDate(
-      this.renewalDate.getDate() + renewalPeriods[this.frequency]
-    );
+    const period = renewalPeriods[this.frequency];
+    if (period) {
+      this.renewalDate.setDate(
+        this.renewalDate.getDate() + renewalPeriods[this.frequency]
+      );
+    }
   }
 
   // Auto-update the status if renewal date has passed
